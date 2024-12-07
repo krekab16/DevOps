@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'nodejs'
+    scrape_interval: 5s
+    static_configs:
+      - targets:
+        - '172.18.0.20:3000'
+        - '172.18.0.21:3000'
+        - '172.18.0.22:3000'
+        - '172.18.0.23:3000'

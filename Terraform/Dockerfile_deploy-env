@@ -1,0 +1,19 @@
+FROM node:20-alpine AS builder
+RUN apk update
+RUN apk add git
+WORKDIR /app
+RUN git clone https://github.com/krekab16/sample-app-for-devops.git
+WORKDIR /app/terraform-sample-app-for-devops
+RUN git checkout feature/http-server
+RUN npm ci
+RUN npm run build
+
+FROM node:20-alpine
+RUN npm install -g pm2
+RUN apk add curl
+WORKDIR /app
+COPY --from=builder /app/terraform-sample-app-for-devops/dist ./dist
+COPY --from=builder /app/terraform-sample-app-for-devops/package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+EXPOSE 3000
+CMD ["pm2-runtime", "start", "dist/index.js"]

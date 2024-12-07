@@ -1,0 +1,19 @@
+FROM node:20
+
+RUN apt-get update
+RUN npm install -g @angular/cli
+RUN ng version
+
+WORKDIR /tmp
+
+ENV NG_CLI_ANALYTICS=false
+
+RUN ng new beadando-project --interactive false --ssr false --style scss
+
+WORKDIR /tmp/beadando-project
+
+RUN ng build
+
+EXPOSE 4200
+
+CMD ["ng", "serve", "--host", "0.0.0.0"]

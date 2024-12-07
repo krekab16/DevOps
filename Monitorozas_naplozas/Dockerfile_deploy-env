@@ -1,0 +1,38 @@
+FROM node:20-alpine AS builder
+RUN apk update
+RUN apk add git
+WORKDIR /app
+RUN git clone https://github.com/krekab16/sample-app-for-devops.git
+WORKDIR /app/sample-app-for-devops
+RUN git checkout feature/monitoring
+RUN npm ci
+RUN npm run build
+
+FROM node:20-alpine
+RUN npm install -g pm2
+RUN apk add curl
+
+RUN apk add --no-cache \
+    pcre \
+    zabbix-agent2
+
+COPY zabbix_agent2.conf /etc/zabbix/zabbix_agent2.conf
+
+RUN apk add --no-cache rsyslog
+
+COPY rsyslog.conf /etc/rsyslog.conf
+
+RUN mkdir -p /var/log/pm2
+
+ENV PM2_SYSLOG=true
+
+WORKDIR /app
+COPY --from=builder /app/sample-app-for-devops/dist ./dist
+COPY --from=builder /app/sample-app-for-devops/package*.json ./
+COPY --from=builder /app/sample-app-for-devops/start.sh ./
+RUN npm ci --only=production && npm cache clean --force
+EXPOSE 3000 10050
+
+RUN chmod +x start.sh
+
+CMD ["./start.sh"]
